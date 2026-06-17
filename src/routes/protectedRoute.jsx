@@ -1,21 +1,25 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../contexts/authContext'
 
-export function ProtectedRoute({ children, allowedRoles }) {
-  const { user, signed } = useAuth();
+export default function ProtectedRoute({ children, requiredPerfil }) {
+  const { isLoggedIn, usuario, loading } = useAuth()
 
-  // Se não estiver logado, manda para o login
-  if (!signed) {
-    return <Navigate to="/login" replace />;
+  if (loading) return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', color: 'var(--green)', fontFamily: 'var(--font-mono)'
+    }}>
+      Carregando...
+    </div>
+  )
+
+  if (!isLoggedIn) return <Navigate to="/login" replace />
+
+  if (requiredPerfil && usuario.perfil !== requiredPerfil) {
+    const redirect = usuario.perfil === 'admin' ? '/admin' : '/dashboard'
+    return <Navigate to={redirect} replace />
   }
 
-  // Se a rota exigir um perfil específico (admin ou usuario) e o usuário não tiver, redireciona
-  if (allowedRoles && !allowedRoles.includes(user.perfil)) {
-    // Se for admin tentando ir para área de usuário, ou vice-versa, redireciona para a home correta
-    return user.perfil === 'admin' 
-      ? <Navigate to="/admin/dashboard" replace /> 
-      : <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
+  return children
 }
